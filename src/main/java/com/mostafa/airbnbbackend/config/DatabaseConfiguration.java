@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
-@EnableJpaRepositories({"com.mostafa.airbnbbackend.user.repository"})
+@EnableJpaRepositories({"com.mostafa.airbnbbackend.user.repository",
+        "com.mostafa.airbnbbackend.listing.repository"})
 @EnableTransactionManagement
 @EnableJpaAuditing
 public class DatabaseConfiguration {
