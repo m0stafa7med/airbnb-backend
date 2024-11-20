@@ -10,8 +10,10 @@
     <property name="uuidType" value="uuid" dbms="postgresql"/>
     <property name="datetimeType" value="datetime" dbms="postgresql"/>
 
-    <include file="/db/changelog/00000000000001_user.xml" relativeToChangelogFile="false"/>
-    <include file="/db/changelog/00000000000002_listing.xml" relativeToChangelogFile="false"/>
-    <include file="/db/changelog/00000000000003_booking.xml" relativeToChangelogFile="false"/>
+
+    <include file="classpath:db/changelog/schema.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:db/changelog/00000000000001_user.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:db/changelog/00000000000002_listing.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:db/changelog/00000000000003_booking.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
