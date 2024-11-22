@@ -3,9 +3,10 @@ logging:
     ROOT: INFO
     org.hibernate.SQL: DEBUG
     com.mostafa.airbnbbackend: DEBUG
-    liquibase: DEBUG
 
 spring:
+  profiles:
+    active: dev
   application:
     name: airbnb-backend
   datasource:
@@ -13,10 +14,6 @@ spring:
     hikari:
       poolName: Hikari
       auto-commit: false
-    username: postgres
-    password: 12345
-    url: jdbc:postgresql://localhost:5432/airbnb_backend?createDatabaseIfNotExists=true
-    driver-class-name: org.postgresql.Driver
   data:
     jpa:
       repositories:
@@ -24,7 +21,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
     properties:
       hibernate:
         default_schema: airbnb_backend
