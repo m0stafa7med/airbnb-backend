@@ -1,6 +1,7 @@
 package com.mostafa.airbnbbackend.listing.mapper;
 
 
+import com.mostafa.airbnbbackend.listing.dto.sub.PictureDTO;
 import com.mostafa.airbnbbackend.listing.entity.ListingPicture;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -12,7 +13,7 @@ import java.util.Set;
 @Mapper(componentModel = "spring")
 public interface ListingPictureMapper {
 
-/*
+
 
     Set<ListingPicture> pictureDTOsToListingPictures(List<PictureDTO> pictureDTOs);
 
@@ -32,6 +33,5 @@ public interface ListingPictureMapper {
     default PictureDTO extractCover(Set<ListingPicture> pictures) {
         return pictures.stream().findFirst().map(this::convertToPictureDTO).orElseThrow();
     }
-*/
 
 }

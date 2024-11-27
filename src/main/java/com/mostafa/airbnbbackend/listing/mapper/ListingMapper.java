@@ -1,6 +1,8 @@
 package com.mostafa.airbnbbackend.listing.mapper;
 
 
+import com.mostafa.airbnbbackend.listing.dto.*;
+import com.mostafa.airbnbbackend.listing.dto.vo.PriceVO;
 import com.mostafa.airbnbbackend.listing.entity.Listing;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -9,7 +11,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring", uses = {ListingPictureMapper.class})
 public interface ListingMapper {
-/*
+
     @Mapping(target = "landlordPublicId", ignore = true)
     @Mapping(target = "publicId", ignore = true)
     @Mapping(target = "lastModifiedDate", ignore = true)
@@ -50,5 +52,5 @@ public interface ListingMapper {
     DisplayListingDTO listingToDisplayListingDTO(Listing listing);
 
     @Mapping(target = "listingPublicId", source = "publicId")
-    ListingCreateBookingDTO mapListingToListingCreateBookingDTO(Listing listing);*/
+    ListingCreateBookingDTO mapListingToListingCreateBookingDTO(Listing listing);
 }
