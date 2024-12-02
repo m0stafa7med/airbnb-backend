@@ -12,7 +12,6 @@ import com.mostafa.airbnbbackend.shared.dto.State;
 import com.mostafa.airbnbbackend.user.dto.ReadUserDTO;
 import com.mostafa.airbnbbackend.user.service.Auth0Service;
 import com.mostafa.airbnbbackend.user.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@RequiredArgsConstructor
 @Service
 public class LandlordService {
 
@@ -29,6 +27,14 @@ public class LandlordService {
     private final UserService userService;
     private final Auth0Service auth0Service;
     private final PictureService pictureService;
+
+    public LandlordService(ListingRepository listingRepository, ListingMapper listingMapper, UserService userService, Auth0Service auth0Service, PictureService pictureService) {
+        this.listingRepository = listingRepository;
+        this.listingMapper = listingMapper;
+        this.userService = userService;
+        this.auth0Service = auth0Service;
+        this.pictureService = pictureService;
+    }
 
     public CreatedListingDTO create(SaveListingDTO saveListingDTO) {
         Listing newListing = listingMapper.saveListingDTOToListing(saveListingDTO);

@@ -14,7 +14,6 @@ import com.mostafa.airbnbbackend.user.exception.UserException;
 import com.mostafa.airbnbbackend.user.service.UserService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -31,7 +30,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/landlord-listing")
 public class LandlordController {
@@ -41,11 +39,16 @@ public class LandlordController {
     private final UserService userService;
     private final ObjectMapper objectMapper;
 
+    public LandlordController(LandlordService landlordService, Validator validator, UserService userService, ObjectMapper objectMapper) {
+        this.landlordService = landlordService;
+        this.validator = validator;
+        this.userService = userService;
+        this.objectMapper = objectMapper;
+    }
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CreatedListingDTO> create(
-            MultipartHttpServletRequest request,
-            @RequestPart(name = "dto") String saveListingDTOString
+    public ResponseEntity<CreatedListingDTO> create(MultipartHttpServletRequest request,
+                                                    @RequestPart(name = "dto") String saveListingDTOString
     ) throws IOException {
         List<PictureDTO> pictures = request.getFileMap()
                 .values()
