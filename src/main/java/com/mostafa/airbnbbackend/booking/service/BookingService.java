@@ -1,4 +1,4 @@
-package com.mostafa.airbnbbackend.listing.service;
+package com.mostafa.airbnbbackend.booking.service;
 
 
 import com.mostafa.airbnbbackend.booking.dto.BookedDateDTO;
@@ -11,6 +11,7 @@ import com.mostafa.airbnbbackend.config.SecurityUtils;
 import com.mostafa.airbnbbackend.listing.dto.DisplayCardListingDTO;
 import com.mostafa.airbnbbackend.listing.dto.ListingCreateBookingDTO;
 import com.mostafa.airbnbbackend.listing.dto.vo.PriceVO;
+import com.mostafa.airbnbbackend.listing.service.LandlordService;
 import com.mostafa.airbnbbackend.shared.dto.State;
 import com.mostafa.airbnbbackend.user.dto.ReadUserDTO;
 import com.mostafa.airbnbbackend.user.service.UserService;

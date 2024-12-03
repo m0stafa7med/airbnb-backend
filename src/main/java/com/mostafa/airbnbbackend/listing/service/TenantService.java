@@ -1,6 +1,7 @@
 package com.mostafa.airbnbbackend.listing.service;
 
 
+import com.mostafa.airbnbbackend.booking.service.BookingService;
 import com.mostafa.airbnbbackend.listing.dto.DisplayCardListingDTO;
 import com.mostafa.airbnbbackend.listing.dto.DisplayListingDTO;
 import com.mostafa.airbnbbackend.listing.dto.SearchDTO;
