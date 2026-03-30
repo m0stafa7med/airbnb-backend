@@ -5,6 +5,7 @@ import com.mostafa.airbnbbackend.user.dto.ReadUserDTO;
 import com.mostafa.airbnbbackend.user.entity.User;
 import com.mostafa.airbnbbackend.user.mapper.UserMapper;
 import com.mostafa.airbnbbackend.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -16,16 +17,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private static final String UPDATED_AT_KEY = "updated_at";
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
-        this.userRepository = userRepository;
-        this.userMapper = userMapper;
-    }
 
     @Transactional(readOnly = true)
     public ReadUserDTO getAuthenticatedUserFromSecurityContext() {
@@ -81,3 +78,4 @@ public class UserService {
     }
 
 }
+

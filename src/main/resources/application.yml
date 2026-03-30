@@ -22,13 +22,9 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        default_schema: airbnb_backend
   liquibase:
     contexts: dev
     change-log: classpath:db/changelog/master.xml
-    default-schema: airbnb_backend
     enabled: true
   #    drop-first: true
   servlet:
@@ -37,13 +33,14 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 server:
-  port: 8080
+  port: 8081
+
 
 okta:
   oauth2:
     issuer: https://airbnb-backend.us.auth0.com/
-    client-id: ${AUTH0_CLIENT_ID}
-    client-secret: ${AUTH0_CLIENT_SECRET}
+    client-id: FNlkLniuKXbkXi7dKZP2SKOHUDBuR0B2
+    client-secret: RlUl5QEkLHof-3-aBIvyv3su10LIVv2Ifg0EwslayIPWalsr_gYmftbDBctA-T6w
 
 application:
   auth0:

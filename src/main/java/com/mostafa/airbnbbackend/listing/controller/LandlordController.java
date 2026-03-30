@@ -14,6 +14,7 @@ import com.mostafa.airbnbbackend.user.exception.UserException;
 import com.mostafa.airbnbbackend.user.service.UserService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -27,10 +28,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/landlord-listing")
 public class LandlordController {
 
@@ -39,68 +40,84 @@ public class LandlordController {
     private final UserService userService;
     private final ObjectMapper objectMapper;
 
-    public LandlordController(LandlordService landlordService, Validator validator, UserService userService, ObjectMapper objectMapper) {
-        this.landlordService = landlordService;
-        this.validator = validator;
-        this.userService = userService;
-        this.objectMapper = objectMapper;
-    }
-
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CreatedListingDTO> create(MultipartHttpServletRequest request,
-                                                    @RequestPart(name = "dto") String saveListingDTOString
-    ) throws IOException {
-        List<PictureDTO> pictures = request.getFileMap()
-                .values()
-                .stream()
-                .map(mapMultipartFileToPictureDTO())
-                .toList();
+    public ResponseEntity<?> create(MultipartHttpServletRequest request,
+                                    @RequestPart("dto") String saveListingDTOString) throws IOException {
 
-        SaveListingDTO saveListingDTO = objectMapper.readValue(saveListingDTOString, SaveListingDTO.class);
-        saveListingDTO.setPictures(pictures);
+        SaveListingDTO saveListingDTO = parseAndAttachPictures(request, saveListingDTOString);
 
         Set<ConstraintViolation<SaveListingDTO>> violations = validator.validate(saveListingDTO);
         if (!violations.isEmpty()) {
-            String violationsJoined = violations.stream()
-                    .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
-                    .collect(Collectors.joining());
-
-            ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, violationsJoined);
-            return ResponseEntity.of(problemDetail).build();
-        } else {
-            return ResponseEntity.ok(landlordService.create(saveListingDTO));
+            return buildValidationErrorResponse(violations);
         }
+
+        CreatedListingDTO createdListing = landlordService.create(saveListingDTO);
+        return ResponseEntity.ok(createdListing);
     }
 
-
-    private static Function<MultipartFile, PictureDTO> mapMultipartFileToPictureDTO() {
-        return multipartFile -> {
-            try {
-                return new PictureDTO(multipartFile.getBytes(), multipartFile.getContentType(), false);
-            } catch (IOException ioe) {
-                throw new UserException(String.format("Cannot parse multipart file: %s", multipartFile.getOriginalFilename()));
-            }
-        };
-    }
-
-    @GetMapping(value = "/get-all")
+    @GetMapping("/get-all")
     @PreAuthorize("hasAnyRole('" + SecurityUtils.ROLE_LANDLORD + "')")
     public ResponseEntity<List<DisplayCardListingDTO>> getAll() {
-        ReadUserDTO connectedUser = userService.getAuthenticatedUserFromSecurityContext();
-        List<DisplayCardListingDTO> allProperties = landlordService.getAllProperties(connectedUser);
-        return ResponseEntity.ok(allProperties);
+        ReadUserDTO connectedUser = getConnectedUser();
+        return ResponseEntity.ok(landlordService.getAllProperties(connectedUser));
     }
 
     @DeleteMapping("/delete")
     @PreAuthorize("hasAnyRole('" + SecurityUtils.ROLE_LANDLORD + "')")
     public ResponseEntity<UUID> delete(@RequestParam UUID publicId) {
-        ReadUserDTO connectedUser = userService.getAuthenticatedUserFromSecurityContext();
-        State<UUID, String> deleteState = landlordService.delete(publicId, connectedUser);
-        if (deleteState.getStatus().equals(StatusNotification.OK)) {
-            return ResponseEntity.ok(deleteState.getValue());
-        } else if (deleteState.getStatus().equals(StatusNotification.UNAUTHORIZED)) {
+        ReadUserDTO connectedUser = getConnectedUser();
+        State<UUID, String> result = landlordService.delete(publicId, connectedUser);
+
+        if (result.getStatus() == StatusNotification.OK) {
+            return ResponseEntity.ok(result.getValue());
+        }
+
+        if (result.getStatus() == StatusNotification.UNAUTHORIZED) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    private SaveListingDTO parseAndAttachPictures(MultipartHttpServletRequest request,
+            String saveListingDTOString) throws IOException {
+        SaveListingDTO dto = objectMapper.readValue(saveListingDTOString, SaveListingDTO.class);
+        dto.setPictures(extractPictures(request));
+        return dto;
+    }
+
+    private List<PictureDTO> extractPictures(MultipartHttpServletRequest request) {
+        return request.getFileMap()
+                .values()
+                .stream()
+                .map(this::mapToPictureDTO)
+                .toList();
+    }
+
+    private PictureDTO mapToPictureDTO(MultipartFile file) {
+        try {
+            return new PictureDTO(file.getBytes(), file.getContentType(), false);
+        } catch (IOException e) {
+            throw new UserException(
+                    "Cannot parse multipart file: " + file.getOriginalFilename()
+            );
+        }
+    }
+
+    private ResponseEntity<ProblemDetail> buildValidationErrorResponse(
+            Set<ConstraintViolation<SaveListingDTO>> violations
+    ) {
+        String message = violations.stream()
+                .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                .collect(Collectors.joining(", "));
+
+        ProblemDetail problemDetail =
+                ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
+
+        return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+    private ReadUserDTO getConnectedUser() {
+        return userService.getAuthenticatedUserFromSecurityContext();
     }
 }
