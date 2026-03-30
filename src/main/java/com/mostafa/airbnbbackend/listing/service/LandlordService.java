@@ -10,7 +10,7 @@ import com.mostafa.airbnbbackend.listing.mapper.ListingMapper;
 import com.mostafa.airbnbbackend.listing.repository.ListingRepository;
 import com.mostafa.airbnbbackend.shared.dto.State;
 import com.mostafa.airbnbbackend.user.dto.ReadUserDTO;
-import com.mostafa.airbnbbackend.user.service.Auth0Service;
+//import com.mostafa.airbnbbackend.user.service.Auth0Service;
 import com.mostafa.airbnbbackend.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +25,14 @@ public class LandlordService {
     private final ListingRepository listingRepository;
     private final ListingMapper listingMapper;
     private final UserService userService;
-    private final Auth0Service auth0Service;
+//    private final Auth0Service auth0Service;
     private final PictureService pictureService;
 
-    public LandlordService(ListingRepository listingRepository, ListingMapper listingMapper, UserService userService, Auth0Service auth0Service, PictureService pictureService) {
+    public LandlordService(ListingRepository listingRepository, ListingMapper listingMapper, UserService userService, PictureService pictureService) {
         this.listingRepository = listingRepository;
         this.listingMapper = listingMapper;
         this.userService = userService;
-        this.auth0Service = auth0Service;
+//        this.auth0Service = auth0Service;
         this.pictureService = pictureService;
     }
 
@@ -46,7 +46,7 @@ public class LandlordService {
 
         pictureService.saveAll(saveListingDTO.getPictures(), savedListing);
 
-        auth0Service.addLandlordRoleToUser(userConnected);
+//        auth0Service.addLandlordRoleToUser(userConnected);
 
         return listingMapper.listingToCreatedListingDTO(savedListing);
     }
