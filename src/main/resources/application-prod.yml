@@ -1,3 +1,6 @@
+server:
+  forward-headers-strategy: framework
+
 logging:
   level:
     ROOT: info
