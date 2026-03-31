@@ -38,10 +38,10 @@ server:
 
 okta:
   oauth2:
-    issuer: https://airbnb-backend.us.auth0.com/
-    client-id: FNlkLniuKXbkXi7dKZP2SKOHUDBuR0B2
-    client-secret: RlUl5QEkLHof-3-aBIvyv3su10LIVv2Ifg0EwslayIPWalsr_gYmftbDBctA-T6w
+    issuer: ${OKTA_OAUTH2_ISSUER}
+    client-id: ${OKTA_OAUTH2_CLIENT_ID}
+    client-secret: ${OKTA_OAUTH2_CLIENT_SECRET}
 
 application:
   auth0:
-    role-landlord-id: rol_CRmDV1Jopx6SYhs0
+    role-landlord-id: ${AUTH0_ROLE_LANDLORD_ID}
