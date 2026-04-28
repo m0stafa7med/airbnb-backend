@@ -1,10 +1,5 @@
 server:
   forward-headers-strategy: framework
-  servlet:
-    session:
-      cookie:
-        secure: true
-        same-site: lax
 
 logging:
   level:
@@ -24,13 +19,3 @@ spring:
   liquibase:
     contexts: prod
     default-schema: airbnb_backend
-
-okta:
-  oauth2:
-    issuer: ${OKTA_OAUTH2_ISSUER}
-    client-id: ${OKTA_OAUTH2_CLIENT_ID}
-    client-secret: ${OKTA_OAUTH2_CLIENT_SECRET}
-
-application:
-  auth0:
-    role-landlord-id: ${AUTH0_ROLE_LANDLORD_ID}

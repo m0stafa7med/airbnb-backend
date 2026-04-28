@@ -20,16 +20,16 @@ import java.util.UUID;
 @Service
 public class Auth0Service {
 
-    @Value("${okta.oauth2.client-id}")
+    @Value("${auth0.client-id}")
     private String clientId;
 
-    @Value("${okta.oauth2.client-secret}")
+    @Value("${auth0.client-secret}")
     private String clientSecret;
 
-    @Value("${okta.oauth2.issuer}")
+    @Value("${auth0.domain}")
     private String domain;
 
-    @Value("${application.auth0.role-landlord-id}")
+    @Value("${auth0.role-landlord-id}")
     private String roleLandlordId;
 
     public void addLandlordRoleToUser(ReadUserDTO readUserDTO) {

@@ -7,7 +7,8 @@ import com.mostafa.airbnbbackend.user.mapper.UserMapper;
 import com.mostafa.airbnbbackend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +27,8 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public ReadUserDTO getAuthenticatedUserFromSecurityContext() {
-        OAuth2User principal = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = SecurityUtils.mapOauth2AttributesToUser(principal.getAttributes());
+        Jwt jwt = (Jwt) ((JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication()).getToken();
+        User user = SecurityUtils.mapJwtToUser(jwt);
         return getByEmail(user.getEmail()).orElseThrow();
     }
 
@@ -37,18 +38,18 @@ public class UserService {
         return oneByEmail.map(userMapper::readUserDTOToUser);
     }
 
-    public void syncWithIdp(OAuth2User oAuth2User, boolean forceResync) {
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        User user = SecurityUtils.mapOauth2AttributesToUser(attributes);
+    public void syncWithIdp(Jwt jwt, boolean forceResync) {
+        Map<String, Object> claims = jwt.getClaims();
+        User user = SecurityUtils.mapJwtToUser(jwt);
         Optional<User> existingUser = userRepository.findOneByEmail(user.getEmail());
         if (existingUser.isPresent()) {
-            if (attributes.get(UPDATED_AT_KEY) != null) {
+            if (claims.get(UPDATED_AT_KEY) != null) {
                 Instant lastModifiedDate = existingUser.orElseThrow().getLastModifiedDate();
                 Instant idpModifiedDate;
-                if (attributes.get(UPDATED_AT_KEY) instanceof Instant instant) {
+                if (claims.get(UPDATED_AT_KEY) instanceof Instant instant) {
                     idpModifiedDate = instant;
                 } else {
-                    idpModifiedDate = Instant.ofEpochSecond((Integer) attributes.get(UPDATED_AT_KEY));
+                    idpModifiedDate = Instant.ofEpochSecond(((Number) claims.get(UPDATED_AT_KEY)).longValue());
                 }
                 if (idpModifiedDate.isAfter(lastModifiedDate) || forceResync) {
                     updateUser(user);
@@ -78,4 +79,3 @@ public class UserService {
     }
 
 }
-

@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 import java.util.Arrays;
@@ -23,40 +24,33 @@ public class SecurityUtils {
 
     public static final String CLAIMS_NAMESPACE = "https://www.darwesh.com/roles";
 
-    public static User mapOauth2AttributesToUser(Map<String, Object> attributes) {
+    public static User mapJwtToUser(Jwt jwt) {
+        Map<String, Object> claims = jwt.getClaims();
         User user = new User();
-        String sub = String.valueOf(attributes.get("sub"));
 
-        String username = null;
-
-        if (attributes.get("preferred_username") != null) {
-            username = ((String) attributes.get("preferred_username")).toLowerCase();
+        if (claims.get("given_name") != null) {
+            user.setFirstName((String) claims.get("given_name"));
+        } else if (claims.get("nickname") != null) {
+            user.setFirstName((String) claims.get("nickname"));
         }
 
-        if (attributes.get("given_name") != null) {
-            user.setFirstName(((String) attributes.get("given_name")));
-        } else if ((attributes.get("nickname") != null)) {
-            user.setFirstName(((String) attributes.get("nickname")));
+        if (claims.get("family_name") != null) {
+            user.setLastName((String) claims.get("family_name"));
         }
 
-        if (attributes.get("family_name") != null) {
-            user.setLastName(((String) attributes.get("family_name")));
-        }
-
-        if (attributes.get("email") != null) {
-            user.setEmail(((String) attributes.get("email")));
-        } else if (sub.contains("|") && (username != null && username.contains("@"))) {
-            user.setEmail(username);
+        if (claims.get("email") != null) {
+            user.setEmail((String) claims.get("email"));
         } else {
-            user.setEmail(sub);
+            user.setEmail(jwt.getSubject());
         }
 
-        if (attributes.get("picture") != null) {
-            user.setImageUrl(((String) attributes.get("picture")));
+        if (claims.get("picture") != null) {
+            user.setImageUrl((String) claims.get("picture"));
         }
 
-        if (attributes.get(CLAIMS_NAMESPACE) != null) {
-            List<String> authoritiesRaw = (List<String>) attributes.get(CLAIMS_NAMESPACE);
+        if (claims.get(CLAIMS_NAMESPACE) != null) {
+            @SuppressWarnings("unchecked")
+            List<String> authoritiesRaw = (List<String>) claims.get(CLAIMS_NAMESPACE);
             Set<Authority> authorities = authoritiesRaw.stream()
                     .map(authority -> {
                         Authority auth = new Authority();
@@ -72,8 +66,9 @@ public class SecurityUtils {
         return mapRolesToGrantedAuthorities(getRolesFromClaims(claims));
     }
 
+    @SuppressWarnings("unchecked")
     private static Collection<String> getRolesFromClaims(Map<String, Object> claims) {
-        return (List<String>) claims.get(CLAIMS_NAMESPACE);
+        return (List<String>) claims.getOrDefault(CLAIMS_NAMESPACE, List.of());
     }
 
     private static List<SimpleGrantedAuthority> mapRolesToGrantedAuthorities(Collection<String> roles) {
@@ -88,8 +83,9 @@ public class SecurityUtils {
 
     private static Stream<String> getAuthorities(Authentication authentication) {
         Collection<? extends GrantedAuthority> authorities = authentication
-                instanceof JwtAuthenticationToken jwtAuthenticationToken ?
-                extractAuthorityFromClaims(jwtAuthenticationToken.getToken().getClaims()) : authentication.getAuthorities();
+                instanceof JwtAuthenticationToken jwtAuthenticationToken
+                ? extractAuthorityFromClaims(jwtAuthenticationToken.getToken().getClaims())
+                : authentication.getAuthorities();
         return authorities.stream().map(GrantedAuthority::getAuthority);
     }
 }
