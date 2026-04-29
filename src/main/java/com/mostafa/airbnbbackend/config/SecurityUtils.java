@@ -22,7 +22,7 @@ public class SecurityUtils {
     public static final String ROLE_TENANT = "ROLE_TENANT";
     public static final String ROLE_LANDLORD = "ROLE_LANDLORD";
 
-    public static final String CLAIMS_NAMESPACE = "https://www.darwesh.com/roles";
+    public static final String CLAIMS_NAMESPACE = "https://www.mostafa.com/roles";
 
     public static User mapJwtToUser(Jwt jwt) {
         Map<String, Object> claims = jwt.getClaims();
