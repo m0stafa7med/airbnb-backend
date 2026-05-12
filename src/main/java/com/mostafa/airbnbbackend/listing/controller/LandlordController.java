@@ -10,8 +10,10 @@ import com.mostafa.airbnbbackend.listing.service.LandlordService;
 import com.mostafa.airbnbbackend.shared.dto.State;
 import com.mostafa.airbnbbackend.shared.dto.StatusNotification;
 import com.mostafa.airbnbbackend.user.dto.ReadUserDTO;
-import com.mostafa.airbnbbackend.user.exception.UserException;
 import com.mostafa.airbnbbackend.user.service.UserService;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +23,12 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -35,16 +39,39 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/landlord-listing")
 public class LandlordController {
 
+    private static final String DTO_PART_NAME = "dto";
+
     private final LandlordService landlordService;
     private final Validator validator;
     private final UserService userService;
     private final ObjectMapper objectMapper;
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> create(MultipartHttpServletRequest request,
-                                    @RequestPart("dto") String saveListingDTOString) throws IOException {
+    public ResponseEntity<?> create(HttpServletRequest request) throws IOException, ServletException {
+        Collection<Part> parts = request.getParts();
+        if (parts.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Empty multipart request"));
+        }
 
-        SaveListingDTO saveListingDTO = parseAndAttachPictures(request, saveListingDTOString);
+        String dtoJson = null;
+        List<PictureDTO> pictures = new ArrayList<>();
+
+        for (Part part : parts) {
+            if (DTO_PART_NAME.equals(part.getName())) {
+                dtoJson = readPartAsString(part);
+            } else {
+                pictures.add(readPartAsPicture(part));
+            }
+        }
+
+        if (dtoJson == null) {
+            return ResponseEntity.badRequest()
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Missing 'dto' part"));
+        }
+
+        SaveListingDTO saveListingDTO = objectMapper.readValue(dtoJson, SaveListingDTO.class);
+        saveListingDTO.setPictures(pictures);
 
         Set<ConstraintViolation<SaveListingDTO>> violations = validator.validate(saveListingDTO);
         if (!violations.isEmpty()) {
@@ -56,14 +83,14 @@ public class LandlordController {
     }
 
     @GetMapping("/get-all")
-    @PreAuthorize("hasAnyRole('" + SecurityUtils.ROLE_LANDLORD + "')")
+    @PreAuthorize("hasAuthority('" + SecurityUtils.ROLE_LANDLORD + "')")
     public ResponseEntity<List<DisplayCardListingDTO>> getAll() {
         ReadUserDTO connectedUser = getConnectedUser();
         return ResponseEntity.ok(landlordService.getAllProperties(connectedUser));
     }
 
     @DeleteMapping("/delete")
-    @PreAuthorize("hasAnyRole('" + SecurityUtils.ROLE_LANDLORD + "')")
+    @PreAuthorize("hasAuthority('" + SecurityUtils.ROLE_LANDLORD + "')")
     public ResponseEntity<UUID> delete(@RequestParam UUID publicId) {
         ReadUserDTO connectedUser = getConnectedUser();
         State<UUID, String> result = landlordService.delete(publicId, connectedUser);
@@ -79,34 +106,20 @@ public class LandlordController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
-    private SaveListingDTO parseAndAttachPictures(MultipartHttpServletRequest request,
-            String saveListingDTOString) throws IOException {
-        SaveListingDTO dto = objectMapper.readValue(saveListingDTOString, SaveListingDTO.class);
-        dto.setPictures(extractPictures(request));
-        return dto;
+    private String readPartAsString(Part part) throws IOException {
+        try (InputStream in = part.getInputStream()) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
-    private List<PictureDTO> extractPictures(MultipartHttpServletRequest request) {
-        return request.getFileMap()
-                .values()
-                .stream()
-                .map(this::mapToPictureDTO)
-                .toList();
-    }
-
-    private PictureDTO mapToPictureDTO(MultipartFile file) {
-        try {
-            return new PictureDTO(file.getBytes(), file.getContentType(), false);
-        } catch (IOException e) {
-            throw new UserException(
-                    "Cannot parse multipart file: " + file.getOriginalFilename()
-            );
+    private PictureDTO readPartAsPicture(Part part) throws IOException {
+        try (InputStream in = part.getInputStream()) {
+            return new PictureDTO(in.readAllBytes(), part.getContentType(), false);
         }
     }
 
     private ResponseEntity<ProblemDetail> buildValidationErrorResponse(
-            Set<ConstraintViolation<SaveListingDTO>> violations
-    ) {
+            Set<ConstraintViolation<SaveListingDTO>> violations) {
         String message = violations.stream()
                 .map(v -> v.getPropertyPath() + " " + v.getMessage())
                 .collect(Collectors.joining(", "));
